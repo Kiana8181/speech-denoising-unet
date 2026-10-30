@@ -1,0 +1,25 @@
+# Core scientific stack
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.14.1
+scikit-learn==1.5.2
+matplotlib==3.9.2
+tqdm==4.66.5
+
+# Audio
+librosa==0.10.2.post1
+soundfile==0.13.1
+numba==0.68.1
+
+# Deep learning (a CUDA GPU is strongly recommended for the full run)
+torch==2.5.1
+torchvision==0.20.1
+segmentation-models-pytorch==0.4.0
+timm==1.0.30
+huggingface-hub==2.4.0
+
+# Notebook execution and HTML/PDF export
+ipykernel==6.29.5
+nbclient==0.10.0
+nbconvert==7.16.6
+nbformat==5.10.4

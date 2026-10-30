@@ -1,0 +1,68 @@
+name: Publish notebook results
+
+# The notebook is stored with the outputs of its full GPU run on the 3.7 GB dataset.
+# CI does not retrain: it converts the executed notebook to index.html, extracts the
+# figures and builds the PDF report, then publishes them.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install export dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install matplotlib==3.9.2 nbconvert==7.16.6 nbformat==5.10.4
+
+      - name: Export index.html, figures and PDF report from the executed notebook
+        run: python scripts/run_pipeline.py --no-execute
+
+      - name: Upload results as a downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-results
+          path: |
+            site/index.html
+            outputs/
+          retention-days: 30
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    # Requires Settings → Pages → Source: "GitHub Actions"
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
